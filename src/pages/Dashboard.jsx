@@ -70,7 +70,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      fetch("http://127.0.0.1:3003/api/sensors/206730913373132")
+      fetch("http://maptest.ddns.net:3003/api/sensors/206730913373132")
         .then((response) => {
           if (!response.ok) {
             throw new Error("Network response was not ok: " + response.statusText);
