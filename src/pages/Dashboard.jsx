@@ -6,7 +6,9 @@ import { ProgressBar } from "primereact/progressbar";
 import { TabView, TabPanel } from "primereact/tabview";
 import { Chart } from "primereact/chart";
 import { Carousel } from "primereact/carousel";
-import mqtt from "mqtt";
+import { Card } from 'primereact/card';
+
+
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
@@ -35,12 +37,12 @@ const Dashboard = () => {
   const [weatherData, setWeatherData] = useState([]);
   const [chartOptions, setChartOptions] = useState({});
   const [humidityData, setHumidityData] = useState([]);
+
   const [rainData, setRainData] = useState([]);
   const [sunData, setSunData] = useState([]);
   const [modules, setModules] = useState([
-    { moduleId: "Module 1", name: "Sensor Module 1" },
-    { moduleId: "Module 2", name: "Sensor Module 2" },
-    { moduleId: "Module 3", name: "Sensor Module 3" },
+    { moduleId: "206730913373132", name: "Sensor Module 1" },
+    { moduleId: "esp_001", name: "ESP32" },
   ]);
 
   const responsiveOptions = [
@@ -67,6 +69,24 @@ const Dashboard = () => {
   ];
 
   useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetch("http://10.0.0.240:3003/api/sensors/206730913373132")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok: " + response.statusText);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setHumidityData(data.humidity);
+          setRainData(data.rain);
+          setSunData(data.sun);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }, 1000);
+
     const fetchWeatherData = async () => {
       try {
         const response = await axios.get(
@@ -75,7 +95,7 @@ const Dashboard = () => {
         const data = response.data;
         const formattedData = data.forecast.forecastday.map((day, index) => ({
           id: index,
-          date: getDayStatus(day.date),
+          date: day.date,
           condition: day.day.condition.text,
           temp: day.day.avgtemp_c,
           max_temp: day.day.maxtemp_c,
@@ -97,6 +117,7 @@ const Dashboard = () => {
     const options = {
       maintainAspectRatio: false,
       aspectRatio: 0.6,
+      animation: false,
       plugins: {
         legend: {
           labels: {
@@ -124,47 +145,15 @@ const Dashboard = () => {
       },
     };
     setChartOptions(options);
+
     fetchWeatherData();
-
-    const client = mqtt.connect("mqtt://broker.hivemq.com:1883");
-
-    client.on("connect", () => {
-      client.subscribe("swift/module/+", (err) => {
-        if (err) {
-          console.error("Error subscribing to MQTT topic:", err);
-        }
-      });
-    });
-
-    client.on("message", (topic, message) => {
-      const data = JSON.parse(message.toString());
-      const moduleId = topic.split("/").pop();
-
-      setHumidityData((prevData) =>
-        Array.isArray(prevData)
-          ? [...prevData, { moduleId, value: data.sensor_humedad_1 }]
-          : [{ moduleId, value: data.sensor_humedad_1 }]
-      );
-      setRainData((prevData) =>
-        Array.isArray(prevData) ? [...prevData, { moduleId, value: data.rain }] : [{ moduleId, value: data.rain }]
-      );
-      setSunData((prevData) =>
-        Array.isArray(prevData) ? [...prevData, { moduleId, value: data.sol }] : [{ moduleId, value: data.sol }]
-      );
-    });
-
-    return () => {
-      client.end();
-    };
+    return () => clearInterval(intervalId);
   }, []);
 
   const moduleTemplate = (module) => {
     return (
-      <div className="module-item">
-        <div>
-          <h4 className="mb-1">{module.name}</h4>
-        </div>
-      </div>
+      <Card title={module.name} subTitle={module.moduleId} className="md:w-25rem ">
+      </Card>
     );
   };
 
@@ -178,21 +167,6 @@ const Dashboard = () => {
 
   const temperatureBodyTemplate = (rowData) => {
     return <ProgressBar value={rowData.temp} showValue={true} style={{ height: "6px" }} />;
-  };
-
-  const generateChartData = (data, label) => {
-    return {
-      labels: data.map((entry) => entry.moduleId),
-      datasets: [
-        {
-          label,
-          data: data.map((entry) => entry.value),
-          fill: false,
-          borderColor: "blue",
-          tension: 0.4,
-        },
-      ],
-    };
   };
 
   return (
@@ -221,13 +195,13 @@ const Dashboard = () => {
       <div className="modules-sensor-chart">
         <TabView>
           <TabPanel header="Humidity">
-            <Chart type="line" data={generateChartData(humidityData, "Humidity")} options={chartOptions} />
+            <Chart type="line" data={humidityData} options={chartOptions} />
           </TabPanel>
           <TabPanel header="Rain">
-            <Chart type="line" data={generateChartData(rainData, "Rain")} options={chartOptions} />
+            <Chart type="line" data={rainData} options={chartOptions} />
           </TabPanel>
           <TabPanel header="Sun">
-            <Chart type="line" data={generateChartData(sunData, "Sun")} options={chartOptions} />
+            <Chart type="line" data={sunData} options={chartOptions} />
           </TabPanel>
         </TabView>
       </div>
