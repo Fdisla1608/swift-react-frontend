@@ -6,13 +6,18 @@ import { ProgressBar } from "primereact/progressbar";
 import { TabView, TabPanel } from "primereact/tabview";
 import { Chart } from "primereact/chart";
 import { Carousel } from "primereact/carousel";
-import { Card } from 'primereact/card';
+import { Card } from "primereact/card";
+import { ListBox } from "primereact/listbox";
 
+import sample from "../styles/images/sunny_gift.mp4";
 
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "../styles/dashboard.css";
+
+import GaugeChart from "../components/GaugeChart";
+import GaugeSun from "../components/GaugeSun";
 
 function getDayStatus(dateString) {
   const inputDate = new Date(dateString);
@@ -33,16 +38,55 @@ function getDayStatus(dateString) {
 }
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
   const [weatherData, setWeatherData] = useState([]);
   const [chartOptions, setChartOptions] = useState({});
   const [humidityData, setHumidityData] = useState([]);
+  const [sunData, setsunData] = useState([]);
+  const [selectedSensor, setSelectedSensor] = useState("sh01");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [page, setPage] = useState(0);
 
-  const [rainData, setRainData] = useState([]);
-  const [sunData, setSunData] = useState([]);
-  const [modules, setModules] = useState([
-    { moduleId: "206730913373132", name: "Sensor Module 1" },
-    { moduleId: "esp_001", name: "ESP32" },
+  const [module, setModules] = useState([
+    {
+      moduleId: "246642630964476",
+      name: "Modulo Edge",
+      sensors: [
+        {
+          label: "Humedad",
+          code: "HUM",
+          items: [{ label: "Sensor Humedad Suelo", value: "sh01" }],
+        },
+        {
+          label: "Luminosidad",
+          code: "LUX",
+          items: [{ label: "Sensor Luminosidad", value: "lm01" }],
+        },
+      ],
+    },
+    {
+      moduleId: "206730913373132",
+      name: "Sensor Module 1",
+      sensors: [
+        {
+          label: "Humedad",
+          code: "HUM",
+          items: [
+            { label: "Sensor Humedad Ambiental", value: "sh01" },
+            { label: "Sensor Humedad Suelo", value: "sh02" },
+          ],
+        },
+        {
+          label: "Temperatura",
+          code: "TEMP",
+          items: [{ label: "Sensor Temperatura Ambiental", value: "tp01" }],
+        },
+        {
+          label: "Luminosidad",
+          code: "LUX",
+          items: [{ label: "Principal", value: "LM01" }],
+        },
+      ],
+    },
   ]);
 
   const responsiveOptions = [
@@ -70,7 +114,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      fetch("http://maptest.ddns.net:3003/api/sensors/206730913373132")
+      fetch(`http://maptest.ddns.net:3003/api/sensors/${module[currentIndex].moduleId}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error("Network response was not ok: " + response.statusText);
@@ -79,18 +123,17 @@ const Dashboard = () => {
         })
         .then((data) => {
           setHumidityData(data.humidity);
-          setRainData(data.rain);
-          setSunData(data.sun);
+          setsunData(data.sun);
         })
         .catch((error) => {
-          console.error("Error:", error);
+          //console.error("Error: 404", );
         });
     }, 1000);
 
     const fetchWeatherData = async () => {
       try {
         const response = await axios.get(
-          `http://api.weatherapi.com/v1/forecast.json?key=f3e9d9ebbc0c4719aed20645241407&q=19.4649572929804,-70.70426520453394&days=7`
+          `http://api.weatherapi.com/v1/forecast.json?key=f3e9d9ebbc0c4719aed20645241407&q=19.4649572929804,-70.70426520453394&days=7&lang=es`
         );
         const data = response.data;
         const formattedData = data.forecast.forecastday.map((day, index) => ({
@@ -102,10 +145,8 @@ const Dashboard = () => {
           min_temp: day.day.mintemp_c,
         }));
         setWeatherData(formattedData);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching weather data:", error);
-        setLoading(false);
       }
     };
 
@@ -145,16 +186,13 @@ const Dashboard = () => {
       },
     };
     setChartOptions(options);
-
+    console.log(selectedSensor);
     fetchWeatherData();
     return () => clearInterval(intervalId);
-  }, []);
+  }, [selectedSensor, currentIndex]);
 
   const moduleTemplate = (module) => {
-    return (
-      <Card title={module.name} subTitle={module.moduleId} className="md:w-25rem ">
-      </Card>
-    );
+    return <Card title={module.name} subTitle={module.moduleId} className="md:w-25rem "></Card>;
   };
 
   const conditionBodyTemplate = (rowData) => {
@@ -169,12 +207,41 @@ const Dashboard = () => {
     return <ProgressBar value={rowData.temp} showValue={true} style={{ height: "6px" }} />;
   };
 
+  const onPageChange = (e) => {
+    setPage(e.page);
+    setCurrentIndex(e.page);
+  };
+
+  const groupTemplate = (option) => {
+    return (
+      <div className="flex align-items-center gap-2">
+        <img
+          alt={option.name}
+          src="https://primefaces.org/cdn/primereact/images/flag/flag_placeholder.png"
+          className={`flag flag-${option.code.toLowerCase()}`}
+          style={{ width: "18px" }}
+        />
+        <div>{option.label}</div>
+      </div>
+    );
+  };
+
   return (
     <section>
       <div className="internet-info-panel">
-        <div className="weather-panel"></div>
+        <div className="weather-panel">
+          <video className="background-video" autoPlay loop muted>
+            <source src={sample} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
         <div className="forecast-panel">
-          <DataTable value={weatherData} loading={loading} dataKey="id" emptyMessage="No Weather data found">
+          <DataTable
+            value={weatherData}
+            dataKey="id"
+            emptyMessage="No Weather data found"
+            className="forecast-data-table"
+          >
             <Column field="date" header="Date" style={{ minWidth: "12rem" }} />
             <Column field="condition" header="Condition" style={{ minWidth: "12rem" }} body={conditionBodyTemplate} />
             <Column field="min_temp" header="Min Temp (°C)" style={{ minWidth: "12rem" }} />
@@ -185,25 +252,58 @@ const Dashboard = () => {
       </div>
       <div className="modules-sensors">
         <Carousel
-          value={modules}
+          value={module}
           numScroll={1}
           numVisible={1}
           responsiveOptions={responsiveOptions}
           itemTemplate={moduleTemplate}
+          page={page}
+          onPageChange={onPageChange}
         />
       </div>
       <div className="modules-sensor-chart">
-        <TabView>
-          <TabPanel header="Humidity">
-            <Chart type="line" data={humidityData} options={chartOptions} />
-          </TabPanel>
-          <TabPanel header="Rain">
-            <Chart type="line" data={rainData} options={chartOptions} />
-          </TabPanel>
-          <TabPanel header="Sun">
-            <Chart type="line" data={sunData} options={chartOptions} />
-          </TabPanel>
-        </TabView>
+        <Card>
+          <div className="humity-panel">
+            <div className="humity-sensors">
+              <ListBox
+                value={selectedSensor}
+                onChange={(e) => setSelectedSensor(e.value)}
+                options={module[currentIndex].sensors}
+                optionLabel="label"
+                optionGroupLabel="label"
+                optionGroupChildren="items"
+                optionGroupTemplate={groupTemplate}
+                className="w-full center h-full md:w-14rem"
+                listStyle={{ maxHeight: "500px" }}
+              />
+            </div>
+            <TabView className="humity-charts">
+              <TabPanel header="Gauge">
+                {selectedSensor === "sh01" ? (
+                  <GaugeChart
+                    data={humidityData?.datasets?.[0]?.data?.[11] !== undefined ? humidityData.datasets[0].data[11] : 0}
+                  />
+                ) : selectedSensor === "lm01" ? (
+                  <GaugeSun
+                    data={sunData?.datasets?.[0]?.data?.[11] !== undefined ? sunData.datasets[0].data[11] : 0}
+                  />
+                ) : (
+                  <div>Default component or fallback UI</div>
+                )}
+              </TabPanel>
+              <TabPanel header="Registro">
+                {selectedSensor === "sh01" ? (
+                  <Chart type="line" data={humidityData} options={chartOptions} />
+                ) : selectedSensor === "lm01" ? (
+                  <Chart type="line" data={sunData} options={chartOptions} />
+
+                ) : (
+                  <div>Default component or fallback UI</div>
+                )}
+              </TabPanel>
+            </TabView>
+          </div>
+        </Card>
       </div>
     </section>
   );

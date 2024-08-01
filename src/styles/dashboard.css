@@ -9,6 +9,7 @@ section {
 .internet-info-panel {
   display: flex;
   gap: 15px;
+  max-height: 45vh;
   justify-content: space-between;
 }
 
@@ -16,8 +17,19 @@ section {
   width: 60%;
 }
 
+.forecast-data-table {
+  height: 100%;
+  overflow-y: auto;
+}
+
 .weather-panel {
   width: 40%;
+}
+
+.background-video {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
 }
 
 .modules-info-panel {
@@ -26,19 +38,34 @@ section {
   justify-content: space-between;
 }
 
-.modules-sensor-data {
+.humity-panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 15px;
 }
 
-.modules-sensor-chart {
+.humity-sensors {
+  flex: 1;
+}
+
+.humity-charts {
+  flex: 2;
 }
 
 .module-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 2rem;
-    margin: 0.5rem;
-    text-align: center;
-  }
-  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  margin: 0.5rem;
+  text-align: center;
+}
+
+.gauge-tab-panel{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

@@ -8,7 +8,6 @@ const Navbar = () => {
 
   const items = [
     { label: 'Dashboard', icon: 'pi pi-chart-line', command: () => { setActiveIndex(0); navigate('/dashboard'); } },
-    { label: 'Controls', icon: 'pi pi-sliders-v', command: () => { setActiveIndex(1); navigate('/controls'); } },
     { label: 'Terrain', icon: 'pi pi-map', command: () => { setActiveIndex(2); navigate('/terrain'); } }
   ];
 
