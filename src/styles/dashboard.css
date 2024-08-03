@@ -1,57 +1,29 @@
 section {
   display: flex;
+  flex: 0;
   flex-direction: column;
-  height: 100%;
-  padding: 25px;
   gap: 15px;
-}
-
-.internet-info-panel {
-  display: flex;
-  gap: 15px;
-  max-height: 45vh;
-  justify-content: space-between;
-}
-
-.forecast-panel {
-  width: 60%;
-}
-
-.forecast-data-table {
-  height: 100%;
-  overflow-y: auto;
-}
-
-.weather-panel {
-  width: 40%;
-}
-
-.background-video {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-}
-
-.modules-info-panel {
-  display: flex;
-  gap: 15px;
-  justify-content: space-between;
+  margin: 0;
 }
 
 .humity-panel {
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-wrap: nowrap;
   gap: 15px;
 }
 
 .humity-sensors {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+  height: 100%;
+  padding: 10px;
 }
 
 .humity-charts {
   flex: 2;
+  max-height: 50px;
 }
 
 .module-item {

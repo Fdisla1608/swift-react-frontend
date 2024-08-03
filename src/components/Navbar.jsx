@@ -8,10 +8,18 @@ const Navbar = () => {
 
   const items = [
     {
-      label: "Dashboard",
-      icon: "pi pi-chart-line",
+      label: "Clima",
+      icon: "pi pi-sun",
       command: () => {
         setActiveIndex(0);
+        navigate("/weather");
+      },
+    },
+    {
+      label: "Sensores",
+      icon: "pi pi-chart-line",
+      command: () => {
+        setActiveIndex(1);
         navigate("/dashboard");
       },
     },
@@ -27,7 +35,7 @@ const Navbar = () => {
       label: "Configuracion",
       icon: "pi pi-map",
       command: () => {
-        setActiveIndex(2);
+        setActiveIndex(3);
         navigate("/configuration");
       },
     },

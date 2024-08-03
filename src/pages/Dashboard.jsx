@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { ProgressBar } from "primereact/progressbar";
+
 import { TabView, TabPanel } from "primereact/tabview";
 import { Chart } from "primereact/chart";
 import { Carousel } from "primereact/carousel";
 import { Card } from "primereact/card";
 import { ListBox } from "primereact/listbox";
-
-import sample from "../styles/images/sunny_gift.mp4";
 
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
@@ -38,7 +33,6 @@ function getDayStatus(dateString) {
 }
 
 const Dashboard = () => {
-  const [weatherData, setWeatherData] = useState([]);
   const [chartOptions, setChartOptions] = useState({});
   const [humidityData, setHumidityData] = useState([]);
   const [sunData, setsunData] = useState([]);
@@ -130,26 +124,6 @@ const Dashboard = () => {
         });
     }, 1000);
 
-    const fetchWeatherData = async () => {
-      try {
-        const response = await axios.get(
-          `http://api.weatherapi.com/v1/forecast.json?key=f3e9d9ebbc0c4719aed20645241407&q=19.4649572929804,-70.70426520453394&days=7&lang=es`
-        );
-        const data = response.data;
-        const formattedData = data.forecast.forecastday.map((day, index) => ({
-          id: index,
-          date: day.date,
-          condition: day.day.condition.text,
-          temp: day.day.avgtemp_c,
-          max_temp: day.day.maxtemp_c,
-          min_temp: day.day.mintemp_c,
-        }));
-        setWeatherData(formattedData);
-      } catch (error) {
-        console.error("Error fetching weather data:", error);
-      }
-    };
-
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue("--text-color");
     const textColorSecondary = documentStyle.getPropertyValue("--text-color-secondary");
@@ -158,6 +132,7 @@ const Dashboard = () => {
     const options = {
       maintainAspectRatio: false,
       aspectRatio: 0.6,
+      maxHeight: "500px",
       animation: false,
       plugins: {
         legend: {
@@ -186,24 +161,11 @@ const Dashboard = () => {
       },
     };
     setChartOptions(options);
-    fetchWeatherData();
     return () => clearInterval(intervalId);
   }, [selectedSensor, currentIndex]);
 
   const moduleTemplate = (module) => {
     return <Card title={module.name} subTitle={module.moduleId} className="md:w-25rem "></Card>;
-  };
-
-  const conditionBodyTemplate = (rowData) => {
-    return (
-      <div className="flex align-items-center gap-2">
-        <span>{rowData.condition}</span>
-      </div>
-    );
-  };
-
-  const temperatureBodyTemplate = (rowData) => {
-    return <ProgressBar value={rowData.temp} showValue={true} style={{ height: "6px" }} />;
   };
 
   const onPageChange = (e) => {
@@ -227,82 +189,51 @@ const Dashboard = () => {
 
   return (
     <section>
-      <div className="internet-info-panel">
-        <div className="weather-panel">
-          <video className="background-video" autoPlay loop muted>
-            <source src={sample} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+      <div className="humity-panel">
+        <div className="humity-sensors">
+          <Carousel
+            value={module}
+            numScroll={1}
+            numVisible={1}
+            responsiveOptions={responsiveOptions}
+            itemTemplate={moduleTemplate}
+            page={page}
+            onPageChange={onPageChange}
+          />
+          <ListBox
+            value={selectedSensor}
+            onChange={(e) => setSelectedSensor(e.value)}
+            options={module[currentIndex].sensors}
+            optionLabel="label"
+            optionGroupLabel="label"
+            optionGroupChildren="items"
+            optionGroupTemplate={groupTemplate}
+            className="w-full center h-full md:w-14rem"
+            listStyle={{ maxHeight: "500px" }}
+          />
         </div>
-        <div className="forecast-panel">
-          <DataTable
-            value={weatherData}
-            dataKey="id"
-            emptyMessage="No Weather data found"
-            className="forecast-data-table"
-          >
-            <Column field="date" header="Date" style={{ minWidth: "12rem" }} />
-            <Column field="condition" header="Condition" style={{ minWidth: "12rem" }} body={conditionBodyTemplate} />
-            <Column field="min_temp" header="Min Temp (°C)" style={{ minWidth: "12rem" }} />
-            <Column field="temp" header="Avg Temp (°C)" style={{ minWidth: "12rem" }} body={temperatureBodyTemplate} />
-            <Column field="max_temp" header="Max Temp (°C)" style={{ minWidth: "12rem" }} />
-          </DataTable>
-        </div>
-      </div>
-      <div className="modules-sensors">
-        <Carousel
-          value={module}
-          numScroll={1}
-          numVisible={1}
-          responsiveOptions={responsiveOptions}
-          itemTemplate={moduleTemplate}
-          page={page}
-          onPageChange={onPageChange}
-        />
-      </div>
-      <div className="modules-sensor-chart">
-        <Card>
-          <div className="humity-panel">
-            <div className="humity-sensors">
-              <ListBox
-                value={selectedSensor}
-                onChange={(e) => setSelectedSensor(e.value)}
-                options={module[currentIndex].sensors}
-                optionLabel="label"
-                optionGroupLabel="label"
-                optionGroupChildren="items"
-                optionGroupTemplate={groupTemplate}
-                className="w-full center h-full md:w-14rem"
-                listStyle={{ maxHeight: "500px" }}
+        <TabView className="humity-charts">
+          <TabPanel header="Gauge">
+            {selectedSensor === "sh01" ? (
+              <GaugeChart
+                data={humidityData?.datasets?.[0]?.data?.[11] !== undefined ? humidityData.datasets[0].data[11] : 0}
               />
-            </div>
-            <TabView className="humity-charts">
-              <TabPanel header="Gauge">
-                {selectedSensor === "sh01" ? (
-                  <GaugeChart
-                    data={humidityData?.datasets?.[0]?.data?.[11] !== undefined ? humidityData.datasets[0].data[11] : 0}
-                  />
-                ) : selectedSensor === "lm01" ? (
-                  <GaugeSun
-                    data={sunData?.datasets?.[0]?.data?.[11] !== undefined ? sunData.datasets[0].data[11] : 0}
-                  />
-                ) : (
-                  <div>Default component or fallback UI</div>
-                )}
-              </TabPanel>
-              <TabPanel header="Registro">
-                {selectedSensor === "sh01" ? (
-                  <Chart type="line" data={humidityData} options={chartOptions} />
-                ) : selectedSensor === "lm01" ? (
-                  <Chart type="line" data={sunData} options={chartOptions} />
-
-                ) : (
-                  <div>Default component or fallback UI</div>
-                )}
-              </TabPanel>
-            </TabView>
-          </div>
-        </Card>
+            ) : selectedSensor === "lm01" ? (
+              <GaugeSun data={sunData?.datasets?.[0]?.data?.[11] !== undefined ? sunData.datasets[0].data[11] : 0} />
+            ) : (
+              <div>Default component or fallback UI</div>
+            )}
+          </TabPanel>
+          <TabPanel header="Registro">
+            {selectedSensor === "sh01" ? (
+              <Chart type="line" data={humidityData} options={chartOptions} />
+            ) : selectedSensor === "lm01" ? (
+              <Chart type="line" data={sunData} options={chartOptions} />
+            ) : (
+              <div>Default component or fallback UI</div>
+            )}
+          </TabPanel>
+        </TabView>
       </div>
     </section>
   );
