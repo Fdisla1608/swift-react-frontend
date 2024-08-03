@@ -1,0 +1,29 @@
+.terrain-panel {
+  width: 100%;
+  height: 55vh;
+}
+
+.info-window-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: black;
+  padding: "10px";
+  inline-size: 300px;
+  border-radius: "5px";
+}
+
+.info-header {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.info-sub-header {
+  color: darkgray;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.info-container {
+  font-size: 1.05rem;
+}

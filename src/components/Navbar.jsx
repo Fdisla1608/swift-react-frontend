@@ -1,14 +1,36 @@
-import React, { useState } from 'react';
-import { TabMenu } from 'primereact/tabmenu';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { TabMenu } from "primereact/tabmenu";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const navigate = useNavigate();
 
   const items = [
-    { label: 'Dashboard', icon: 'pi pi-chart-line', command: () => { setActiveIndex(0); navigate('/dashboard'); } },
-    { label: 'Terrain', icon: 'pi pi-map', command: () => { setActiveIndex(2); navigate('/terrain'); } }
+    {
+      label: "Dashboard",
+      icon: "pi pi-chart-line",
+      command: () => {
+        setActiveIndex(0);
+        navigate("/dashboard");
+      },
+    },
+    {
+      label: "Mapa",
+      icon: "pi pi-map",
+      command: () => {
+        setActiveIndex(2);
+        navigate("/terrain");
+      },
+    },
+    {
+      label: "Configuracion",
+      icon: "pi pi-map",
+      command: () => {
+        setActiveIndex(2);
+        navigate("/configuration");
+      },
+    },
   ];
 
   return (

@@ -83,7 +83,7 @@ const GaugeSun = (props) => {
           ctx.font = "bold 30px sans-serif";
           ctx.fillStyle = "grey";
           ctx.textAlign = "center";
-          ctx.fillText(`${needleValue} H`, centerX, centerY + 45);
+          ctx.fillText(`${needleValue} LUX`, centerX, centerY + 45);
         },
       },
     ]);

@@ -186,7 +186,6 @@ const Dashboard = () => {
       },
     };
     setChartOptions(options);
-    console.log(selectedSensor);
     fetchWeatherData();
     return () => clearInterval(intervalId);
   }, [selectedSensor, currentIndex]);
