@@ -71,7 +71,7 @@ const Terrain = (props) => {
 
   const fetchTerrains = async () => {
     try {
-      const response = await fetch("http://localhost:3003/api/terrains");
+      const response = await fetch("http://maptest.ddns.net:3003/api/terrains");
 
       if (!response.ok) {
         throw new Error("Error al obtener los terrenos");
@@ -114,7 +114,7 @@ const Terrain = (props) => {
       if (terrainName == null || terrainName === "") {
         console.log("terrainName not provided");
       } else {
-        const response = await fetch("http://localhost:3003/api/terrains", {
+        const response = await fetch("http://maptest.ddns.net:3003/api/terrains", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
