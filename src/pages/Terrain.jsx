@@ -28,7 +28,16 @@ const Terrain = (props) => {
   const [client, setClient] = useState(null);
   const [modules, setModules] = useState({});
   const [terrains, setTerrains] = useState({});
-
+  const [state, setState] = useState({
+    showingInfoWindow: false,
+    activeMarker: {},
+    selectedPlace: {},
+  });
+  const [stateZone, setStateZone] = useState({
+    showingInfoWindow: false,
+    activeMarker: {},
+    selectedPlace: {},
+  });
   const [moduleInfo, setModuleInfo] = useState({
     moduleId: "",
     sensors: { humity: { h_01: 0 }, lux: { l_01: 0 } },
@@ -85,18 +94,12 @@ const Terrain = (props) => {
   };
 
   useEffect(() => {
-    mqttConnect();
+    if (!client) mqttConnect();
     fetchTerrains();
-    // return () => {
-    //   if (client) client.end();
-    // };
+    return () => {
+      if (client) client.end();
+    };
   }, [modules]);
-
-  const [state, setState] = useState({
-    showingInfoWindow: false,
-    activeMarker: {},
-    selectedPlace: {},
-  });
 
   const handleMapClick = (mapProps, map, clickEvent) => {
     const newCoord = {
@@ -142,6 +145,14 @@ const Terrain = (props) => {
     });
   };
 
+  const onTerrainClick = (props, terrain, e) => {
+    setStateZone({
+      selectedPlace: props,
+      activeMarker: terrain,
+      showingInfoWindow: true,
+    });
+  };
+
   const showModules = () => {
     return Object.values(modules).map((module, index) => (
       <Marker
@@ -172,7 +183,9 @@ const Terrain = (props) => {
           strokeOpacity={0.8}
           strokeWeight={2}
           fillColor={color}
-          fillOpacity={0.35}
+          fillOpacity={0.45}
+          object={terrain}
+          onClick={onTerrainClick}
         />
       );
     });
@@ -198,6 +211,15 @@ const Terrain = (props) => {
         {modules && showModules()}
         {terrains && showTerrains()}
 
+        <InfoWindow marker={stateZone.activeMarker} visible={true}>
+          <div className="info-window-panel">
+            <center>
+              <div className="info-header">Zone</div>
+              <div className="info-sub-header">hello</div>
+            </center>
+          </div>
+        </InfoWindow>
+
         <InfoWindow marker={state.activeMarker} visible={state.showingInfoWindow}>
           <div className="info-window-panel">
             <center>
@@ -217,6 +239,8 @@ const Terrain = (props) => {
             </div>
           </div>
         </InfoWindow>
+
+
       </Map>
     </div>
   );

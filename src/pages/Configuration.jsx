@@ -1,15 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Carousel } from "primereact/carousel";
 import { Card } from "primereact/card";
 import { DataTable } from "primereact/datatable";
+import { SelectButton } from "primereact/selectbutton";
 import { InputText } from "primereact/inputtext";
-
+import { Dropdown } from "primereact/dropdown";
 import { Column } from "primereact/column";
 
 const Configuration = () => {
   const [page, setPage] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [module, setModules] = useState([
+  const [sensorType, setSensorTypes] = useState({ label: "Humedad", code: "HUM" });
+  const [selectedSensors, setSelectedSensor] = useState({});
+  const [zone, setZones] = useState({});
+  const [terrains, setTerrains] = useState({});
+
+  const [modules] = useState([
     {
       moduleId: "246642630964476",
       name: "Modulo Edge",
@@ -17,12 +23,12 @@ const Configuration = () => {
         {
           label: "Humedad",
           code: "HUM",
-          items: [{ label: "Sensor Humedad Suelo", value: "sh01" }],
+          items: [{ label: "Sensor Humedad Suelo", code: "sh01" }],
         },
         {
           label: "Luminosidad",
-          code: "LUX",
-          items: [{ label: "Sensor Luminosidad", value: "lm01" }],
+          code: "LUM",
+          items: [{ label: "Sensor Luminosidad", code: "lm01" }],
         },
       ],
     },
@@ -34,23 +40,29 @@ const Configuration = () => {
           label: "Humedad",
           code: "HUM",
           items: [
-            { label: "Sensor Humedad Ambiental", value: "sh01" },
-            { label: "Sensor Humedad Suelo", value: "sh02" },
+            { label: "Sensor Humedad Ambiental", code: "sh01" },
+            { label: "Sensor Humedad Suelo", code: "sh02" },
           ],
         },
         {
           label: "Temperatura",
-          code: "TEMP",
-          items: [{ label: "Sensor Temperatura Ambiental", value: "tp01" }],
+          code: "TMP",
+          items: [{ label: "Sensor Temperatura Ambiental", code: "tp01" }],
         },
         {
           label: "Luminosidad",
-          code: "LUX",
-          items: [{ label: "Principal", value: "LM01" }],
+          code: "LUM",
+          items: [{ label: "Principal", code: "LM01" }],
         },
       ],
     },
   ]);
+
+  const sensorTypes = [
+    { label: "Humedad", code: "HUM" },
+    { label: "Luminosidad", code: "LUM" },
+    { label: "Temperatura", code: "TMP" },
+  ];
 
   const responsiveOptions = [
     {
@@ -79,31 +91,55 @@ const Configuration = () => {
     return <Card title={module.name} subTitle={module.moduleId} className="md:w-25rem "></Card>;
   };
 
-  const textEditor = (options) => {
+  const zoneBodyTemplate = (rowData) => {
     return (
-      <InputText
-        type="text"
-        value={options.value}
-        onChange={(e) => options.editorCallback(e.target.value)}
-        onKeyDown={(e) => e.stopPropagation()}
+      <Dropdown
+        value={zone[rowData.terrainId] || null}
+        onChange={(e) => setZones({ ...zone, [rowData.terrainId]: e.value })}
+        options={terrains}
+        optionLabel="terrainName"
+        placeholder="Select a Type"
+        className="w-full md:w-14rem"
       />
     );
   };
 
-  const onCellEditComplete = (e) => {
-    let { rowData, newValue, field, originalEvent: event } = e;
-    if (newValue.trim().length > 0) rowData[field] = newValue;
-    else event.preventDefault();
+  const getItemsByModuleIdAndCode = (moduleId, code) => {
+    const module = modules.find((mod) => mod.moduleId === moduleId);
+    if (!module) return []; // Retorna vacío si no se encuentra el módulo
+
+    const sensor = module.sensors.find((sensor) => sensor.code === code);
+    return sensor ? sensor.items : []; // Retorna los items si se encuentra el sensor, si no, vacío
   };
+
+  const fetchTerrains = async () => {
+    try {
+      const response = await fetch("http://maptest.ddns.net:3003/api/terrains");
+
+      if (!response.ok) {
+        throw new Error("Error al obtener los terrenos");
+      }
+      const data = await response.json();
+      setTerrains(data);
+    } catch (err) {
+      console.log(err.message);
+    }
+  };
+
+  useEffect(() => {
+    setSelectedSensor(getItemsByModuleIdAndCode(modules[currentIndex].moduleId, sensorType.code));
+    fetchTerrains();
+  }, [sensorType, currentIndex]);
 
   const onPageChange = (e) => {
     setPage(e.page);
     setCurrentIndex(e.page);
   };
+
   return (
     <div className="modules-sensors">
       <Carousel
-        value={module}
+        value={modules}
         numScroll={1}
         numVisible={1}
         responsiveOptions={responsiveOptions}
@@ -111,16 +147,11 @@ const Configuration = () => {
         page={page}
         onPageChange={onPageChange}
       />
-      <DataTable value={module[0].sensors} tableStyle={{ minWidth: "50rem" }}>
-        <Column field="category" header="Categoria"></Column>
-        <Column
-          field="description"
-          header="Descripcion"
-          editor={(options) => textEditor(options)}
-          onCellEditComplete={onCellEditComplete}
-        ></Column>
-        <Column field="code" header="ID"></Column>
-        <Column field="coord" header="Coordenadas"></Column>
+      <SelectButton value={sensorType} onChange={(e) => setSensorTypes(e.value)} options={sensorTypes} />
+      <DataTable value={selectedSensors}>
+        <Column field="code" header="Codigo"></Column>
+        <Column field="label" header="Etiqueta"></Column>
+        <Column field="zone" header="Zonas" body={zoneBodyTemplate}></Column>
       </DataTable>
     </div>
   );
