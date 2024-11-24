@@ -38,7 +38,7 @@ const Navbar = () => {
         setActiveIndex(3);
         navigate("/configuration");
       },
-    },
+    }
   ];
 
   return (

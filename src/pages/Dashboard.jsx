@@ -108,7 +108,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      fetch(`http://maptest.ddns.net:3003/api/sensors/${module[currentIndex].moduleId}`)
+      fetch(`http://swift-agro.ddns.net:3003/api/sensors/${module[currentIndex].moduleId}`)
         .then((response) => {
           if (!response.ok) {
             throw new Error("Network response was not ok: " + response.statusText);
